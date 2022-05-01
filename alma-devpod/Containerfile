@@ -37,9 +37,6 @@ RUN chmod 700 /home/${user}/.ssh && chown -R ${user}:${group} /home/${user}
 USER ${user}
 
 RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir /home/${user}/.local/bin
-COPY --chown=${user}:${group} ./assets/user-cfg.tar.gz /tmp/
-RUN tar -zxf /tmp/user-cfg.tar.gz -C /home/${user}/ && sync && rm -f /tmp/user-cfg.tar.gz
-RUN mkdir -p /home/${user}/devkit && ln -s /opt/jvm/java-8-jdk /home/${user}/devkit/java-jdk && ln -s /opt/tools/gradle/2.0 /home/${user}/devkit/gradle
 
 ## Install ansible via pip3
 RUN /bin/bash -c "source ~/.bashrc && python -m pip install --upgrade pip --user && python -m pip install wheel --user && python -m pip install ansible --user"

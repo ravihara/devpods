@@ -1,0 +1,43 @@
+[user]
+  email = user@example.com
+  name = Example User
+[core]
+  editor = vim
+  pager = less -r
+  autocrlf = input
+[help]
+  autocorrect = 1
+[color]
+  ui = true
+[merge]
+  tool = vimdiff
+  conflictstyle = merge
+[mergetool]
+  prompt = false
+  keepTemporaries = false
+  keepBackup = false
+[mergetool "vimdiff"]
+  trustExitCode = true
+  cmd = vimdiff --auto-merge \"$LOCAL\" \"$BASE\" \"$REMOTE\" --output=\"$MERGED\"
+[diff]
+  tool = vimdiff
+  submodule = log
+[difftool]
+  prompt = false
+[difftool "vimdiff"]
+  trustExitCode = true
+  cmd = vimdiff \"$LOCAL\" \"$REMOTE\"
+[alias]
+  sdifftool = "!git difftool && git submodule foreach 'git difftool'"
+  spush = push --recurse-submodules=on-demand
+  supdate = submodule update --remote --merge
+  lol = log --graph --decorate --pretty=oneline --abbrev-commit --all
+  lsf = diff --name-status
+[status]
+  submodulesummary = 1
+[push]
+  default = simple
+[pull]
+  rebase = false
+[advice]
+  detachedHead = false

@@ -1,0 +1,5 @@
+command_timeout = 2500
+
+[java]
+style = "bright-yellow"
+
