@@ -1,0 +1,53 @@
+FROM docker.io/library/almalinux:8.5
+
+ARG user=podder
+ARG group=podder
+ARG uid=1000
+ARG gid=1000
+
+## Update repo metadata and enable powertools repo
+RUN dnf update -y && dnf install --nodocs -y ca-certificates dnf-plugins-core xz tar zip unzip bzip2 sudo wget curl rsync glibc openssl bash git \
+    && dnf update -y && dnf config-manager --set-enabled powertools
+
+## Setup en-US.utf8 as the default locale
+RUN echo -e "LANG=en_US.utf8" >/etc/locale.conf
+
+## Install various build dependencies
+RUN dnf update -y && dnf install --nodocs -y shadow-utils vim net-tools procps glibc-langpack-en autoconf autogen automake bash-completion \
+    binutils bison byacc bzip2-devel cmake compat-libpthread-nonshared dos2unix elfutils-devel elfutils-libelf-devel expect flex gcc-toolset-10 \
+    gcc-toolset-10-libasan-devel gc-devel gdbm-devel glibc-devel glibc-headers graphviz-devel icu intltool libdb-devel libffi-devel libgomp \
+    libicu-devel libnsl libnsl2-devel libtirpc-devel libtool libzstd-devel m4 make meson nano ncurses-devel ninja-build openssl-devel patch perl \
+    readline-devel rpm-devel sqlite sqlite-devel strace texinfo tk-devel xz-devel zlib-devel libstdc++-devel libuuid libuuid-devel && \
+    dnf module install --nodocs -y python38
+
+## Cleanup the repo metadata and cache
+RUN scl enable gcc-toolset-10 bash && dnf remove -y && dnf autoremove -y && dnf clean all -y && alternatives --set python /usr/bin/python3.8
+
+## Create podder user
+RUN groupadd -g ${gid} ${group} && useradd -d /home/${user} -u ${uid} -g ${group} ${user}
+
+## Use /tmp folder as the current-working-directory
+WORKDIR /tmp
+
+## Setup podder directories and permissions
+RUN mkdir -p /home/${user}/{.ssh,temp} /home/${user}/.local/bin
+RUN chmod 700 /home/${user}/.ssh && chown -R ${user}:${group} /home/${user}
+
+## Switch to podder user so that, user-specific setup can be executed
+USER ${user}
+
+RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes --bin-dir /home/${user}/.local/bin
+COPY --chown=${user}:${group} ./assets/user-cfg.tar.gz /tmp/
+RUN tar -zxf /tmp/user-cfg.tar.gz -C /home/${user}/ && sync && rm -f /tmp/user-cfg.tar.gz
+RUN mkdir -p /home/${user}/devkit && ln -s /opt/jvm/java-8-jdk /home/${user}/devkit/java-jdk && ln -s /opt/tools/gradle/2.0 /home/${user}/devkit/gradle
+
+## Install ansible via pip3
+RUN /bin/bash -c "source ~/.bashrc && python -m pip install --upgrade pip --user && python -m pip install wheel --user && python -m pip install ansible --user"
+
+## Mark volumes
+VOLUME /home/${user}/.ssh
+
+## Finally, switch to root user
+USER root
+
+ENTRYPOINT ["/bin/bash"]
